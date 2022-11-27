@@ -1,0 +1,630 @@
+% Phys 304 Final Project
+% Made by: Truman Paras
+% This simulation runs in the command window - sorry I didn't have time to
+% make a GUI for this ;(
+% Simulates various N-body problem related phenomena and topics
+
+clear; clc; close all;
+choice = 1;
+while choice ~= 0
+    clear; clc; % to save space
+    G = 6.67e-11;
+    choice = input("Which simulation do you want to initiate?" + newline ...
+        + "1) The solar system" + newline + "2) The N body problem" + newline + ...
+        "3) Lagrange points" + newline + "4) Space Invader" + newline + "0) Exit\n");
+    
+    if choice == 1
+        %% initialize planets for Jan 1, 2000. All coords are relative to
+        % the sun, so the script begins with it at (0,0,0). Also, the
+        % xy plane is defined by the plane of the Earth's travel
+        % Data is rx [km], ry [km], rz [km], rmag [km]
+        Mercury = [-2.10532e7;-6.64017e7;-3.49108e6;6.97467e7];
+        Venus =[-1.075048e8;-3.370748e6;6.156932e6;1.0773369e8];
+        Earth = [ -2.520835e7;1.4491945e8;0;1.470956e8];
+        Mars = [2.080017e8;-3.1353135e6;-5.18831011e6;2.0808998e8];
+        Jupiter = [5.989969e8;4.3924027e8;-1.5221065e7;7.429408e8];
+        Saturn = [9.584676e8;9.8218586e8;-5.52089479e7;1.37346177e9];
+        Uranus = [2.15858722e9;-2.05473504e9;-3.559817e7;2.9803862e9];
+        % do Neptune differently
+        Neptune = transpose(planetEphemeris(juliandate(2000,1,1),'Sun', 'Neptune')); % [2.919061567e9;-3.432228865e9;1.90639255e7;4.505716241e9];
+        Neptune_f = transpose(planetEphemeris(juliandate(2000,1,2),'Sun', 'Neptune'));
+        Pluto = [-1.47763074e9;-4.18248927e9;8.752721798e8;4.52136157e9];
+        Sun = [0;0;0;0;0;0;0;0;1988500e24;0;0;0];   % limitation: sun initial position and velocity is zero!
+
+        % Get components and magnitude of velocities manually (ugh) in
+        % km/s, as well as the masses in kg and momenta
+        Mercury(5,1) = sqrt((Mercury(1,1) + 1.7857227e+07)^2 + (Mercury(2,1) + 6.7365533e7)^2 + (Mercury(3,1) + 3.86217562e6)^2)/86400;
+        Mercury(6,1) = -(Mercury(1,1) + 1.7857227e7)/86400;
+        Mercury(7,1) = -(Mercury(2,1) + 6.7365533e7)/86400;
+        Mercury(8,1) = -(Mercury(3,1) + 3.86217562e6)/86400;
+        Mercury(9,1) = .33e24;
+        Mercury(10,1) = Mercury(9,1)* Mercury(6,1);
+        Mercury(11,1) = Mercury(9,1)* Mercury(7,1);
+        Mercury(12,1) = Mercury(9,1)* Mercury(8,1);
+
+        Venus(5,1) = sqrt((Venus(1,1) + 1.073853359e8)^2 + (Venus(2,1) + 6.40677121e6)^2 + (Venus(3,1) - 6.108631e6)^2)/86400;
+        Venus(6,1) = -(Venus(1,1) + 1.073853359e8)/86400;
+        Venus(7,1) = -(Venus(2,1) + 6.40677121e6)/86400;
+        Venus(8,1) = -(Venus(3,1) - 6.108631e6)/86400;
+        Venus(9,1) = 4.87e24;
+        Venus(10,1) = Venus(9,1)* Venus(6,1);
+        Venus(11,1) = Venus(9,1)* Venus(7,1);
+        Venus(12,1) = Venus(9,1)* Venus(8,1);
+
+        Earth(5,1) = sqrt((Earth(1,1) + 2.778228579e7)^2 + (Earth(2,1) - 1.4444614e8)^2 + (Earth(3,1) - 0)^2)/86400;
+        Earth(6,1) = -(Earth(1,1) + 2.778228579e7)/86400;
+        Earth(7,1) = -(Earth(2,1) - 1.4444614e8)/86400;
+        Earth(8,1) = -(Earth(3,1) + 0)/86400;
+        Earth(9,1) = 5.97e24;
+        Earth(10,1) = Earth(9,1)* Earth(6,1);
+        Earth(11,1) = Earth(9,1)* Earth(7,1);
+        Earth(12,1) = Earth(9,1)* Earth(8,1);
+
+        Mars(5,1) = sqrt((Mars(1,1) - 2.08101948e8)^2 + (Mars(2,1) + 8.63077623e5)^2 + (Mars(3,1) + 5.143480519e6)^2)/86400;
+        Mars(6,1) = -(Mars(1,1) - 2.08101948e8)/86400;
+        Mars(7,1) = -(Mars(2,1) + 8.63077623e5)/86400;
+        Mars(8,1) = -(Mars(3,1) + 5.143480519e6)/86400;
+        Mars(9,1) = .642e24;
+        Mars(10,1) = Mars(9,1)* Mars(6,1);
+        Mars(11,1) = Mars(9,1)* Mars(7,1);
+        Mars(12,1) = Mars(9,1)* Mars(8,1);
+
+        Jupiter(5,1) = sqrt((Jupiter(1,1) - 5.98313327e8)^2 + (Jupiter(2,1) - 4.40204652e8)^2 + (Jupiter(3,1) + 1.52097453e7)^2)/86400;
+        Jupiter(6,1) = -(Jupiter(1,1) - 5.98313327e8)/86400;
+        Jupiter(7,1) = -(Jupiter(2,1) - 4.40204652e8)/86400;
+        Jupiter(8,1) = -(Jupiter(3,1) + 1.52097453e7)/86400;
+        Jupiter(9,1) = 1898e24;
+        Jupiter(10,1) = Jupiter(9,1)* Jupiter(6,1);
+        Jupiter(11,1) = Jupiter(9,1)* Jupiter(7,1);
+        Jupiter(12,1) = Jupiter(9,1)* Jupiter(8,1);
+
+        Saturn(5,1) = sqrt((Saturn(1,1) - 9.57824896e8)^2 + (Saturn(2,1) - 9.82768355e8)^2 + (Saturn(3,1) + 5.51935477e7)^2)/86400;
+        Saturn(6,1) = -(Saturn(1,1) - 9.57824896e8)/86400;
+        Saturn(7,1) = -(Saturn(2,1) - 9.82768355e8)/86400;
+        Saturn(8,1) = -(Saturn(3,1) + 5.51935477e7)/86400;
+        Saturn(9,1) = 568e24;
+        Saturn(10,1) = Saturn(9,1)* Saturn(6,1);
+        Saturn(11,1) = Saturn(9,1)* Saturn(7,1);
+        Saturn(12,1) = Saturn(9,1)* Saturn(8,1);
+
+        Uranus(5,1) = sqrt((Uranus(1,1) - 2.15898919e9)^2 + (Uranus(2,1) + 2.054333821e9)^2 + (Uranus(3,1) + 3.560183876e7)^2)/86400;
+        Uranus(6,1) = -(Uranus(1,1) - 2.15898919e9)/86400;
+        Uranus(7,1) = -(Uranus(2,1) + 2.054333821e9)/86400;
+        Uranus(8,1) = -(Uranus(3,1) + 3.560183876e7)/86400;
+        Uranus(9,1) = 86.8e24;
+        Uranus(10,1) = Uranus(9,1)* Uranus(6,1);
+        Uranus(11,1) = Uranus(9,1)* Uranus(7,1);
+        Uranus(12,1) = Uranus(9,1)* Uranus(8,1);
+
+        Neptune(5,1) = sqrt((Neptune(1,1) - Neptune_f(1,1))^2 + (Neptune(2,1) - Neptune_f(2,1))^2 + (Neptune(3,1) - Neptune_f(3,1))^2)/86400;
+        Neptune(6,1) = -(Neptune(1,1) - Neptune_f(1,1))/86400;
+        Neptune(7,1) = -(Neptune(2,1) - Neptune_f(2,1))/86400;
+        Neptune(8,1) = -(Neptune(3,1) - Neptune_f(3,1))/86400;
+        Neptune(9,1) = 102e24;
+        Neptune(10,1) = Neptune(9,1)* Neptune(6,1);
+        Neptune(11,1) = Neptune(9,1)* Neptune(7,1);
+        Neptune(12,1) = Neptune(9,1)* Neptune(8,1);
+        
+
+        Pluto(5,1) = sqrt((Pluto(1,1) + 1.4771776e9)^2 + (Pluto(2,1) + 4.1827193e9)^2 + (Pluto(3,1) - 8.7516564e8)^2)/86400;
+        Pluto(6,1) = -(Pluto(1,1) + 1.4771776e9)/86400;
+        Pluto(7,1) = -(Pluto(2,1) + 4.1827193e9)/86400;
+        Pluto(8,1) = -(Pluto(3,1) - 8.7516564e8)/86400;
+        Pluto(9,1) = 0.013e24;
+        Pluto(10,1) = Pluto(9,1)* Pluto(6,1);
+        Pluto(11,1) = Pluto(9,1)* Pluto(7,1);
+        Pluto(12,1) = Pluto(9,1)* Pluto(8,1);
+
+        Planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto, Sun];
+        PlanetColors = ["#77AC30","#7E2F8E","#0072BD","#A2142F","#D95319",	"#EDB120",	"#4DBEEE", 	"#0000FF", 	"#000000", 	"#FFFF00"];
+        dt = input("Great, since it's possible to simulate this using both Newtonian and Hamiltonian formulations \nI just need you to provide a time step in seconds, so what will it be?\n");
+        endtime = input("Also, how long should this sim run for in years?\n");
+        pick = input("Which would you like to see?\n1)Newtonian\n2)Hamiltonian\n");
+
+        %% Newton formulation
+        drawcount = 0;
+        if pick == 1
+            figure(1)
+            hold on
+            for k = 1:10
+                plot3(Planets(1,k),Planets(2,k),Planets(3,k), 'o', 'MarkerSize', 1.3,'Color',PlanetColors(k));
+            end
+            drawnow;
+            for t = 0:dt:endtime*3600*24*365
+                for i = 1:10
+                    forces = [0,0,0];
+                    for j = 1:10
+                        if i ~= j
+                            force = G*Planets(9,i)*Planets(9,j)/((Planets(1,i)*1000-Planets(1,j)*1000)^2 + (Planets(2,i)*1000-Planets(2,j)*1000)^2 + (Planets(3,i)*1000-Planets(3,j)*1000)^2);
+                            forces(1,1) = forces(1,1) + force*(Planets(1,j)*1000-Planets(1,i)*1000)/sqrt((Planets(1,i)*1000-Planets(1,j)*1000)^2 + (Planets(2,i)*1000-Planets(2,j)*1000)^2 + (Planets(3,i)*1000-Planets(3,j)*1000)^2);
+                            forces(1,2) = forces(1,2) + force*(Planets(2,j)*1000-Planets(2,i)*1000)/sqrt((Planets(1,i)*1000-Planets(1,j)*1000)^2 + (Planets(2,i)*1000-Planets(2,j)*1000)^2 + (Planets(3,i)*1000-Planets(3,j)*1000)^2);
+                            forces(1,3) = forces(1,3) + force*(Planets(3,j)*1000-Planets(3,i)*1000)/sqrt((Planets(1,i)*1000-Planets(1,j)*1000)^2 + (Planets(2,i)*1000-Planets(2,j)*1000)^2 + (Planets(3,i)*1000-Planets(3,j)*1000)^2);
+                        end
+                    end
+                    % with the force components for x,y, and z on this particular planet, it's time to find the new positions and velocities
+                    Planets(6,i) = Planets(6,i)+dt*forces(1,1)/Planets(9,i)/1000;
+                    Planets(7,i) = Planets(7,i)+dt*forces(1,2)/Planets(9,i)/1000;
+                    Planets(8,i) = Planets(8,i)+dt*forces(1,3)/Planets(9,i)/1000;
+                    Planets(1,i) = Planets(1,i)+dt*Planets(6,i);
+                    Planets(2,i) = Planets(2,i)+dt*Planets(7,i);
+                    Planets(3,i) = Planets(3,i)+dt*Planets(8,i);
+                end
+                if(mod(drawcount,100) == 0)
+                    for k = 1:10
+                        plot3(Planets(1,k),Planets(2,k),Planets(3,k), 'o', 'MarkerSize', 2,'Color',PlanetColors(k));
+                    end
+                    drawnow;
+                end
+                drawcount = drawcount + 1;
+            end
+            drawnow;
+
+        %% Hamiltonian formulation
+        elseif pick == 2
+            figure(2)
+            hold on
+            for k = 1:10
+               plot3(Planets(1,k),Planets(2,k),Planets(3,k), 'o', 'MarkerSize', 1.3,'Color',PlanetColors(k));
+            end
+            drawnow;
+            for t = 0:dt:endtime*3600*24*365
+                for i = 1:10
+                    % get updated position
+                    xPos = (Planets(10,i)*dt)/Planets(9,i) + Planets(1,i);
+                    yPos = (Planets(11,i)*dt)/Planets(9,i) + Planets(2,i);
+                    zPos = (Planets(12,i)*dt)/Planets(9,i) + Planets(3,i);
+                    % get momenta
+                    dHdq_x = 0;   % find the sum of the derivatives of each self-potential from the body on all other bodies
+                    dHdq_y = 0;
+                    dHdq_z = 0;
+                    for j = 1:10
+                        if j ~= i
+                            dHdq = G*Planets(9,i)*Planets(9,j)/((Planets(1,j)*1000-Planets(1,i)*1000)^2+(Planets(2,j)*1000-Planets(2,i)*1000)^2+(Planets(3,j)*1000-Planets(3,i)*1000)^2)/1000;
+                            dHdq_x = dHdq_x + dHdq*(Planets(1,j)-Planets(1,i))/sqrt((Planets(1,j)-Planets(1,i))^2+(Planets(2,j)-Planets(2,i))^2+(Planets(3,j)-Planets(3,i))^2);
+                            dHdq_y = dHdq_y + dHdq*(Planets(2,j)-Planets(2,i))/sqrt((Planets(1,j)-Planets(1,i))^2+(Planets(2,j)-Planets(2,i))^2+(Planets(3,j)-Planets(3,i))^2);
+                            dHdq_z = dHdq_z + dHdq*(Planets(3,j)-Planets(3,i))/sqrt((Planets(1,j)-Planets(1,i))^2+(Planets(2,j)-Planets(2,i))^2+(Planets(3,j)-Planets(3,i))^2);
+                        end
+                    end
+                    % update the positions and momenta together
+                    Planets(10,i) = dHdq_x*dt+Planets(10,i);
+                    Planets(11,i) = dHdq_y*dt+Planets(11,i);
+                    Planets(12,i) = dHdq_z*dt+Planets(12,i);
+                    Planets(1,i) = xPos;
+                    Planets(2,i) = yPos;
+                    Planets(3,i) = zPos;
+                end
+                % to improve runtime, change the second value in the mod function
+                if(mod(drawcount,100) == 0)
+                    for k = 1:10
+                       plot3(Planets(1,k),Planets(2,k),Planets(3,k), 'o', 'MarkerSize', 1.3,'Color',PlanetColors(k));
+                    end
+                    drawcount = 0;
+                    drawnow;
+                end
+                drawcount = drawcount + 1;
+            end
+            drawnow;
+        end
+        chaos = input("Would you like to see the chaotic nature of the n-body problem?\n If so, I'll start the sim with slightly different initial conditions and we can see how different the solar system would be\n1) Yes\n2) No\n");
+        if chaos == 1
+            clf(figure(1));
+            for i = 1:10
+                % positions
+                for j = 1:3
+                    Planets(j,i) = Planets(j,i) + (-1e7 + 2e7*rand);
+                end
+                % velocities
+                for j = 6:9
+                    Planets(j,i) = Planets(j,i) + (-1 + 2*rand);
+                end
+            end
+            % run the sim over again
+            figure(1)
+            hold on
+            for k = 1:10
+                plot3(Planets(1,k),Planets(2,k),Planets(3,k), 'o', 'MarkerSize', 1.3,'Color',PlanetColors(k));
+            end
+            drawnow;
+            for t = 0:dt:endtime*3600*24*365
+                for i = 1:10
+                    forces = [0,0,0];
+                    for j = 1:10
+                        if i ~= j
+                            force = G*Planets(9,i)*Planets(9,j)/((Planets(1,i)*1000-Planets(1,j)*1000)^2 + (Planets(2,i)*1000-Planets(2,j)*1000)^2 + (Planets(3,i)*1000-Planets(3,j)*1000)^2);
+                            forces(1,1) = forces(1,1) + force*(Planets(1,j)*1000-Planets(1,i)*1000)/sqrt((Planets(1,i)*1000-Planets(1,j)*1000)^2 + (Planets(2,i)*1000-Planets(2,j)*1000)^2 + (Planets(3,i)*1000-Planets(3,j)*1000)^2);
+                            forces(1,2) = forces(1,2) + force*(Planets(2,j)*1000-Planets(2,i)*1000)/sqrt((Planets(1,i)*1000-Planets(1,j)*1000)^2 + (Planets(2,i)*1000-Planets(2,j)*1000)^2 + (Planets(3,i)*1000-Planets(3,j)*1000)^2);
+                            forces(1,3) = forces(1,3) + force*(Planets(3,j)*1000-Planets(3,i)*1000)/sqrt((Planets(1,i)*1000-Planets(1,j)*1000)^2 + (Planets(2,i)*1000-Planets(2,j)*1000)^2 + (Planets(3,i)*1000-Planets(3,j)*1000)^2);
+                        end
+                    end
+                    % with the force components for x,y, and z on this particular planet, it's time to find the new positions and velocities
+                    Planets(6,i) = Planets(6,i)+dt*forces(1,1)/Planets(9,i)/1000;
+                    Planets(7,i) = Planets(7,i)+dt*forces(1,2)/Planets(9,i)/1000;
+                    Planets(8,i) = Planets(8,i)+dt*forces(1,3)/Planets(9,i)/1000;
+                    Planets(1,i) = Planets(1,i)+dt*Planets(6,i);
+                    Planets(2,i) = Planets(2,i)+dt*Planets(7,i);
+                    Planets(3,i) = Planets(3,i)+dt*Planets(8,i);
+                end
+                if(mod(drawcount,100) == 0)
+                    for k = 1:10
+                        plot3(Planets(1,k),Planets(2,k),Planets(3,k), 'o', 'MarkerSize', 2,'Color',PlanetColors(k));
+                    end
+                    drawnow;
+                end
+                drawcount = drawcount + 1;
+            end
+            drawnow;
+        end
+    elseif choice == 2
+        figure(3)
+        hold on
+        planetNum = input("I'll constrain the starting region to the approximate size of the solar system,\nHow many planets do you want to simulate?\n");
+        sunNum = input("How many suns do you want to include?\n");
+        buffer = input("This sim will run for 10,000 Earth years with a computational timestep of 1 Earth day\nPress any key to continue");
+        kinetic = 0;
+        potential = 0;
+        M = 0;
+        COMx = 0; COMy = 0; COMz = 0;
+        Rx = 0; Ry = 0; Rz = 0;
+        counter = 1;
+        for i = 1:(planetNum+sunNum)
+            % random positions, mass, and velocities
+            Bodies(1,i) = -2*10^9 + (4*10^9)*rand;
+            Bodies(2,i) = -2*10^9 + (4*10^9)*rand;
+            Bodies(3,i) = -2*10^9 + (4*10^9)*rand;
+            % give mass depending on if this is a planet or a star
+            if counter <= planetNum
+                Bodies(4,i) = 0.013e24 + (1898e24-0.013e24)*rand;   % mass between Pluto and Jupiter
+            else
+                Bodies(4,i) = 1988500e24 + 1988500e24*rand;   % mass between one and two suns
+            end
+            % update total mass abd center of mass
+            M = M + Bodies(4,i);
+            COMx = COMx + Bodies(4,i)*Bodies(1,i);
+            COMy = COMy + Bodies(4,i)*Bodies(2,i);
+            COMz = COMz + Bodies(4,i)*Bodies(3,i);
+            Bodies(5,i) = -5 + 10*rand;
+            Bodies(6,i) = -5 + 10*rand;
+            Bodies(7,i) = -5 + 10*rand;
+            kinetic = kinetic + Bodies(4,i)*(Bodies(5,i)^2+ Bodies(6,i)^2+ Bodies(7,i)^2)/2;
+            counter = counter + 1;
+        end
+        COMx = COMx/M;
+        COMy = COMy/M;
+        COMz = COMz/M;
+        for i = 1:(planetNum+sunNum)
+            for j = 1:(planetNum+sunNum)
+                if i ~= j
+                    potential = potential + G*Bodies(4,i)*Bodies(4,j)/sqrt((Bodies(1,i)-Bodies(1,j))^2+(Bodies(2,i)-Bodies(2,j))^2+(Bodies(3,i)-Bodies(3,j))^2);
+                end
+            end
+        end
+        % check if the system is set to converge or not, use a limit of 10e10 kJ difference. Calc for critical time
+        momOfInertia = round(2*kinetic-potential,3);
+        for i = 1:(planetNum+sunNum)
+            Rx = Rx + Bodies(4,i)*(Bodies(1,i)-COMx);
+            Ry = Rx + Bodies(4,i)*(Bodies(2,i)-COMy);
+            Rz = Rx + Bodies(4,i)*(Bodies(3,i)-COMz);
+        end
+        Rx = Rx/(2*M);
+        Ry = Ry/(2*M);
+        Rz = Rz/(2*M);
+        T = sqrt(G*M/sqrt((Rx*1000)^2+(Ry*1000)^2+(Rz*1000)^2));
+        converge = false;
+        % get the title 
+        titleStr = "Prediction: will NOT converge | 2T-U = " + momOfInertia;
+        if abs(momOfInertia) < 10e10
+            converge = true;
+            titleStr = "Prediction: will converge | 2T-U = " + momOfInertia + " | Critical time: " + T;
+        end
+        endtime = 86400*365*10000;   % run for ~10000 Earth years
+        % initial plot
+        for k = 1:(planetNum+sunNum)
+            plot3(Bodies(1,k),Bodies(2,k),Bodies(3,k), 'o', 'MarkerSize', 2,'Color','Black');
+        end
+        xlim([-10e9+abs(COMx),10e9+abs(COMx)]);
+        ylim([-10e9+abs(COMy),10e9+abs(COMy)]);
+        zlim([-10e9+abs(COMz),10e9+abs(COMz)]);
+        title(titleStr);
+        drawnow;
+        timecount = 0;
+        drawcount = 0;
+        % start the sequence
+        for t = 0:86400:endtime
+           COMx = 0; COMy = 0; COMz = 0;
+           Rx = 0; Ry = 0; Rz = 0;
+           kinetic = 0;
+           potential = 0; 
+           for i = 1:(planetNum+sunNum)
+               forces = [0,0,0];
+               for j = 1:(planetNum+sunNum)
+                   if i ~= j
+                       force = G*Bodies(4,i)*Bodies(4,j)/(100000000+(Bodies(1,i)*1000-Bodies(1,j)*1000)^2 + (Bodies(2,i)*1000-Bodies(2,j)*1000)^2 + (Bodies(3,i)*1000-Bodies(3,j)*1000)^2);
+                       forces(1,1) = forces(1,1) + force*(Bodies(1,j)*1000-Bodies(1,i)*1000)/(100000000+sqrt((Bodies(1,i)*1000-Bodies(1,j)*1000)^2 + (Bodies(2,i)*1000-Bodies(2,j)*1000)^2 + (Bodies(3,i)*1000-Bodies(3,j)*1000)^2));
+                       forces(1,2) = forces(1,2) + force*(Bodies(2,j)*1000-Bodies(2,i)*1000)/(100000000+sqrt((Bodies(1,i)*1000-Bodies(1,j)*1000)^2 + (Bodies(2,i)*1000-Bodies(2,j)*1000)^2 + (Bodies(3,i)*1000-Bodies(3,j)*1000)^2));
+                       forces(1,3) = forces(1,3) + force*(Bodies(3,j)*1000-Bodies(3,i)*1000)/(100000000+sqrt((Bodies(1,i)*1000-Bodies(1,j)*1000)^2 + (Bodies(2,i)*1000-Bodies(2,j)*1000)^2 + (Bodies(3,i)*1000-Bodies(3,j)*1000)^2));
+                   end
+               end
+               % with the force components for x,y, and z on this particular planet, it's time to find the new positions and velocities
+               Bodies(5,i) = Bodies(5,i)+86400*forces(1,1)/Bodies(4,i)/1000;
+               Bodies(6,i) = Bodies(6,i)+86400*forces(1,2)/Bodies(4,i)/1000;
+               Bodies(7,i) = Bodies(7,i)+86400*forces(1,3)/Bodies(4,i)/1000;
+               Bodies(1,i) = Bodies(1,i)+86400*Bodies(5,i);
+               Bodies(2,i) = Bodies(2,i)+86400*Bodies(6,i);
+               Bodies(3,i) = Bodies(3,i)+86400*Bodies(7,i);
+               %update kinetic energy and COM
+               kinetic = kinetic + Bodies(4,i)*(Bodies(5,i)^2+ Bodies(6,i)^2+ Bodies(7,i)^2)/2;
+               COMx = COMx + Bodies(4,i)*Bodies(1,i);
+               COMy = COMy + Bodies(4,i)*Bodies(2,i);
+               COMz = COMz + Bodies(4,i)*Bodies(3,i);
+           end
+           COMx = COMx/M;
+           COMy = COMy/M;
+           COMz = COMz/M;
+           % update T
+           for i = 1:(planetNum+sunNum)
+               Rx = Rx + Bodies(4,i)*(Bodies(1,i)-COMx);
+               Ry = Ry + Bodies(4,i)*(Bodies(2,i)-COMy);
+               Rz = Rz +  Bodies(4,i)*(Bodies(3,i)-COMz);
+           end
+           Rx = Rx/(2*M);
+           Ry = Ry/(2*M);
+           Rz = Rz/(2*M);
+           Tf = sqrt(G*M/sqrt((Rx*1000)^2+(Ry*1000)^2+(Rz*1000)^2));
+           %update potential energy
+           for i = 1:(planetNum+sunNum)
+               for j = 1:(planetNum+sunNum)
+                   if i ~= j
+                       potential = potential + G*Bodies(4,i)*Bodies(4,j)/sqrt((Bodies(1,i)-Bodies(1,j))^2+(Bodies(2,i)-Bodies(2,j))^2+(Bodies(3,i)-Bodies(3,j))^2);
+                   end
+               end
+           end
+           if(mod(drawcount,1000) == 0)
+               momOfInertia =  round(abs(2*kinetic-potential),3);
+               if ~converge
+                   titleStr = "Prediction: will NOT converge | 2T-U = " + momOfInertia;
+               else
+                   if T-timecount*86400 > 0
+                       titleStr = "Prediction: will converge | 2T-U = " + momOfInertia +  " | Time until critical time: " + T-timecount*86400;
+                   else
+                       titleStr = "Prediction: will converge | 2T-U = " + momOfInertia +  " | Critical time reached!";
+                   end
+               end
+               clf(figure(3))
+               hold on
+               for k = 1:(planetNum+sunNum)
+                   plot3(Bodies(1,k),Bodies(2,k),Bodies(3,k), 'o', 'MarkerSize', 2,'Color','Black');
+               end
+               xlim([-10e9+COMx,10e9+COMx]);
+               ylim([-10e9+COMy,10e9+COMy]);
+               zlim([-10e9+COMz,10e9+COMz]);
+               title(titleStr);
+               drawnow;
+           end
+           drawcount = drawcount + 1;
+           timecount = timecount + 1;
+       end
+       drawnow;
+       fprintf("The final second moment of inertia is " + abs(2*kinetic-potential) + " and the final critical time is " + Tf + "\n")
+
+    elseif choice == 3
+        lagrangeChoice = input("Here are the 4 unique Lagrange points for the Sun and the Earth on January 1, 2001\nPress any key to continue\n");
+        figure(4)
+        Earth = [ -2.520835e7;1.4491945e8;0];
+        xhat = Earth(1,1)/sqrt(Earth(1,1)^2+Earth(2,1)^2);
+        yhat = Earth(2,1)/sqrt(Earth(1,1)^2+Earth(2,1)^2);
+        Earth(4,1) = -(Earth(1,1) + 2.778228579e7)/86400;
+        Earth(5,1) = -(Earth(2,1) - 1.4444614e8)/86400;
+        Earth(6,1) = 0;
+        Earth(7,1) = 5.97e24;
+        Sun = [0;0;0;0;0;0;01988500e24];
+        % initializee the lagrange point masses, give them a very small
+        % mass of 1 kg
+        L1 = [Earth(1,1)-xhat*1501557;Earth(2,1)+yhat*1501557;0;Earth(4,1)*sqrt((Earth(1,1)+xhat*1501557)^2+(Earth(2,1)+yhat*1501557)^2)/sqrt((-2.520835e7)^2+(1.4491945e8^2));Earth(5,1)*sqrt((Earth(1,1)+xhat*1501557)^2+(Earth(2,1)+yhat*1501557)^2)/sqrt((-2.520835e7)^2+(1.4491945e8^2));0;1];
+        L2 = [Earth(1,1)+xhat*1491557;Earth(2,1)-yhat*1491557;0;Earth(4,1)*sqrt((Earth(1,1)-xhat*1491557)^2+(Earth(2,1)-yhat*1491557)^2)/sqrt((-2.520835e7)^2+(1.4491945e8^2));Earth(5,1)*sqrt((Earth(1,1)-xhat*1491557)^2+(Earth(2,1)-yhat*1491557)^2)/sqrt((-2.520835e7)^2+(1.4491945e8^2));0;1];
+        L3 = [-1*xhat*149599737;-1*yhat*149599737;0;-1*Earth(4,1)*sqrt((xhat*149599737)^2+(yhat*149599737)^2)/sqrt((-2.520835e7)^2+(1.4491945e8^2));-1*Earth(5,1)*sqrt((xhat*149599737)^2+(yhat*149599737)^2)/sqrt((-2.520835e7)^2+(1.4491945e8^2));0;1];
+        L4 = [Earth(1,1)*cosd(60)-Earth(2,1)*sind(60);Earth(1,1)*sind(60)+Earth(2,1)*cosd(60);0;Earth(4,1)*cosd(60)-Earth(5,1)*sind(60);Earth(4,1)*sind(60)+Earth(5,1)*cosd(60);0;1];
+        SunEarth = [Earth,L1,L2,L3,L4,Sun];
+        LagrangeColors = ["blue", "black","black","black","black","yellow"];
+        hold on
+        for k = 1:6
+            plot3(SunEarth(1,k),SunEarth(2,k),SunEarth(3,k), 'o', 'MarkerSize', 2,'Color',LagrangeColors(k));
+        end
+        xlim([-2e8,2e8]);
+        ylim([-2e8,2e8]);
+        drawnow
+        % start sequence
+        for t = 0:1:365*5
+           for i = 1:5
+              forces = [0,0];
+              for j = 1:6
+                  if i ~= j
+                      force = G*SunEarth(7,i)*SunEarth(7,j)/((SunEarth(1,i)*1000-SunEarth(1,j)*1000)^2 + (SunEarth(2,i)*1000-SunEarth(2,j)*1000)^2);
+                      forces(1,1) = forces(1,1) + force*(SunEarth(1,j)*1000-SunEarth(1,i)*1000)/(sqrt((SunEarth(1,i)*1000-SunEarth(1,j)*1000)^2 + (SunEarth(2,i)*1000-SunEarth(2,j)*1000)^2));
+                      forces(1,2) = forces(1,2) + force*(SunEarth(2,j)*1000-SunEarth(2,i)*1000)/(sqrt((SunEarth(1,i)*1000-SunEarth(1,j)*1000)^2 + (SunEarth(2,i)*1000-SunEarth(2,j)*1000)^2));
+                  end
+              end
+              % with the force components for x,y, and z on this particular planet, it's time to find the new positions and velocities
+              SunEarth(4,i) = SunEarth(4,i)+86400*forces(1,1)/SunEarth(7,i)/1000;
+              SunEarth(5,i) = SunEarth(5,i)+86400*forces(1,2)/SunEarth(7,i)/1000;
+              SunEarth(6,i) = 0;
+              SunEarth(1,i) = SunEarth(1,i)+86400*SunEarth(4,i);
+              SunEarth(2,i) = SunEarth(2,i)+86400*SunEarth(5,i);
+              SunEarth(3,i) = 0;
+           end
+           clf(figure(4))
+           hold on
+           for k = 1:6
+               plot3(SunEarth(1,k),SunEarth(2,k),SunEarth(3,k), 'o', 'MarkerSize', 2,'Color',LagrangeColors(k));
+           end
+           xlim([-2e8,2e8]);
+           ylim([-2e8,2e8]);
+           drawnow
+        end
+    
+    
+    elseif choice == 4
+         %% initialize planets for Jan 1, 2000. All coords are relative to
+        % the sun, so the script begins with it at (0,0,0). Also, the
+        % xy plane is defined by the plane of the Earth's travel
+        % Data is rx [km], ry [km], rz [km], rmag [km]
+        Mercury = [-2.10532e7;-6.64017e7;-3.49108e6;6.97467e7];
+        Venus =[-1.075048e8;-3.370748e6;6.156932e6;1.0773369e8];
+        Earth = [ -2.520835e7;1.4491945e8;0;1.470956e8];
+        Mars = [2.080017e8;-3.1353135e6;-5.18831011e6;2.0808998e8];
+        Jupiter = [5.989969e8;4.3924027e8;-1.5221065e7;7.429408e8];
+        Saturn = [9.584676e8;9.8218586e8;-5.52089479e7;1.37346177e9];
+        Uranus = [2.15858722e9;-2.05473504e9;-3.559817e7;2.9803862e9];
+        % do Neptune differently
+        Neptune = transpose(planetEphemeris(juliandate(2000,1,1),'Sun', 'Neptune')); % [2.919061567e9;-3.432228865e9;1.90639255e7;4.505716241e9];
+        Neptune_f = transpose(planetEphemeris(juliandate(2000,1,2),'Sun', 'Neptune'));
+        Pluto = [-1.47763074e9;-4.18248927e9;8.752721798e8;4.52136157e9];
+        Sun = [0;0;0;0;0;0;0;0;1988500e24;0;0;0];   % limitation: sun initial position and velocity is zero!
+
+        % Get components and magnitude of velocities manually (ugh) in
+        % km/s, as well as the masses in kg and momenta
+        Mercury(5,1) = sqrt((Mercury(1,1) + 1.7857227e+07)^2 + (Mercury(2,1) + 6.7365533e7)^2 + (Mercury(3,1) + 3.86217562e6)^2)/86400;
+        Mercury(6,1) = -(Mercury(1,1) + 1.7857227e7)/86400;
+        Mercury(7,1) = -(Mercury(2,1) + 6.7365533e7)/86400;
+        Mercury(8,1) = -(Mercury(3,1) + 3.86217562e6)/86400;
+        Mercury(9,1) = .33e24;
+        Mercury(10,1) = Mercury(9,1)* Mercury(6,1);
+        Mercury(11,1) = Mercury(9,1)* Mercury(7,1);
+        Mercury(12,1) = Mercury(9,1)* Mercury(8,1);
+
+        Venus(5,1) = sqrt((Venus(1,1) + 1.073853359e8)^2 + (Venus(2,1) + 6.40677121e6)^2 + (Venus(3,1) - 6.108631e6)^2)/86400;
+        Venus(6,1) = -(Venus(1,1) + 1.073853359e8)/86400;
+        Venus(7,1) = -(Venus(2,1) + 6.40677121e6)/86400;
+        Venus(8,1) = -(Venus(3,1) - 6.108631e6)/86400;
+        Venus(9,1) = 4.87e24;
+        Venus(10,1) = Venus(9,1)* Venus(6,1);
+        Venus(11,1) = Venus(9,1)* Venus(7,1);
+        Venus(12,1) = Venus(9,1)* Venus(8,1);
+
+        Earth(5,1) = sqrt((Earth(1,1) + 2.778228579e7)^2 + (Earth(2,1) - 1.4444614e8)^2 + (Earth(3,1) - 0)^2)/86400;
+        Earth(6,1) = -(Earth(1,1) + 2.778228579e7)/86400;
+        Earth(7,1) = -(Earth(2,1) - 1.4444614e8)/86400;
+        Earth(8,1) = -(Earth(3,1) + 0)/86400;
+        Earth(9,1) = 5.97e24;
+        Earth(10,1) = Earth(9,1)* Earth(6,1);
+        Earth(11,1) = Earth(9,1)* Earth(7,1);
+        Earth(12,1) = Earth(9,1)* Earth(8,1);
+
+        Mars(5,1) = sqrt((Mars(1,1) - 2.08101948e8)^2 + (Mars(2,1) + 8.63077623e5)^2 + (Mars(3,1) + 5.143480519e6)^2)/86400;
+        Mars(6,1) = -(Mars(1,1) - 2.08101948e8)/86400;
+        Mars(7,1) = -(Mars(2,1) + 8.63077623e5)/86400;
+        Mars(8,1) = -(Mars(3,1) + 5.143480519e6)/86400;
+        Mars(9,1) = .642e24;
+        Mars(10,1) = Mars(9,1)* Mars(6,1);
+        Mars(11,1) = Mars(9,1)* Mars(7,1);
+        Mars(12,1) = Mars(9,1)* Mars(8,1);
+
+        Jupiter(5,1) = sqrt((Jupiter(1,1) - 5.98313327e8)^2 + (Jupiter(2,1) - 4.40204652e8)^2 + (Jupiter(3,1) + 1.52097453e7)^2)/86400;
+        Jupiter(6,1) = -(Jupiter(1,1) - 5.98313327e8)/86400;
+        Jupiter(7,1) = -(Jupiter(2,1) - 4.40204652e8)/86400;
+        Jupiter(8,1) = -(Jupiter(3,1) + 1.52097453e7)/86400;
+        Jupiter(9,1) = 1898e24;
+        Jupiter(10,1) = Jupiter(9,1)* Jupiter(6,1);
+        Jupiter(11,1) = Jupiter(9,1)* Jupiter(7,1);
+        Jupiter(12,1) = Jupiter(9,1)* Jupiter(8,1);
+
+        Saturn(5,1) = sqrt((Saturn(1,1) - 9.57824896e8)^2 + (Saturn(2,1) - 9.82768355e8)^2 + (Saturn(3,1) + 5.51935477e7)^2)/86400;
+        Saturn(6,1) = -(Saturn(1,1) - 9.57824896e8)/86400;
+        Saturn(7,1) = -(Saturn(2,1) - 9.82768355e8)/86400;
+        Saturn(8,1) = -(Saturn(3,1) + 5.51935477e7)/86400;
+        Saturn(9,1) = 568e24;
+        Saturn(10,1) = Saturn(9,1)* Saturn(6,1);
+        Saturn(11,1) = Saturn(9,1)* Saturn(7,1);
+        Saturn(12,1) = Saturn(9,1)* Saturn(8,1);
+
+        Uranus(5,1) = sqrt((Uranus(1,1) - 2.15898919e9)^2 + (Uranus(2,1) + 2.054333821e9)^2 + (Uranus(3,1) + 3.560183876e7)^2)/86400;
+        Uranus(6,1) = -(Uranus(1,1) - 2.15898919e9)/86400;
+        Uranus(7,1) = -(Uranus(2,1) + 2.054333821e9)/86400;
+        Uranus(8,1) = -(Uranus(3,1) + 3.560183876e7)/86400;
+        Uranus(9,1) = 86.8e24;
+        Uranus(10,1) = Uranus(9,1)* Uranus(6,1);
+        Uranus(11,1) = Uranus(9,1)* Uranus(7,1);
+        Uranus(12,1) = Uranus(9,1)* Uranus(8,1);
+
+        Neptune(5,1) = sqrt((Neptune(1,1) - Neptune_f(1,1))^2 + (Neptune(2,1) - Neptune_f(2,1))^2 + (Neptune(3,1) - Neptune_f(3,1))^2)/86400;
+        Neptune(6,1) = -(Neptune(1,1) - Neptune_f(1,1))/86400;
+        Neptune(7,1) = -(Neptune(2,1) - Neptune_f(2,1))/86400;
+        Neptune(8,1) = -(Neptune(3,1) - Neptune_f(3,1))/86400;
+        Neptune(9,1) = 102e24;
+        Neptune(10,1) = Neptune(9,1)* Neptune(6,1);
+        Neptune(11,1) = Neptune(9,1)* Neptune(7,1);
+        Neptune(12,1) = Neptune(9,1)* Neptune(8,1);
+        
+
+        Pluto(5,1) = sqrt((Pluto(1,1) + 1.4771776e9)^2 + (Pluto(2,1) + 4.1827193e9)^2 + (Pluto(3,1) - 8.7516564e8)^2)/86400;
+        Pluto(6,1) = -(Pluto(1,1) + 1.4771776e9)/86400;
+        Pluto(7,1) = -(Pluto(2,1) + 4.1827193e9)/86400;
+        Pluto(8,1) = -(Pluto(3,1) - 8.7516564e8)/86400;
+        Pluto(9,1) = 0.013e24;
+        Pluto(10,1) = Pluto(9,1)* Pluto(6,1);
+        Pluto(11,1) = Pluto(9,1)* Pluto(7,1);
+        Pluto(12,1) = Pluto(9,1)* Pluto(8,1);
+
+        Planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto, Sun];
+
+        % create the invader
+        Invader = [((rand > 0.5)*2 - 1)*1e9 + 1e8*rand;((rand > 0.5)*2 - 1)*1e9 + 1e8*rand;((rand > 0.5)*2 - 1)*1e9 + 1e8*rand;0;0;0;0;0;1000e24;0;0;0];
+        xHat = (-1*Invader(1,1) + 1e9*rand)/sqrt(Invader(1,1)^2+Invader(2,1)^2+Invader(3,1)^2); 
+        yHat = (-1*Invader(2,1) + 1e9*rand)/sqrt(Invader(1,1)^2+Invader(2,1)^2+Invader(3,1)^2);
+        zHat = (-1*Invader(3,1) + 1e9*rand)/sqrt(Invader(1,1)^2+Invader(2,1)^2+Invader(3,1)^2); 
+        % get velocities
+        M = Invader(9,1) + Sun(9,1);
+        V = sqrt(2*M*G/sqrt((Invader(1,1)*1000)^2+(1000*Invader(2,1))^2+(1000*Invader(3,1))^2));
+        Invader(6,1) = V*xHat/1000; 
+        Invader(7,1) = V*yHat/1000; 
+        Invader(8,1) = V*zHat/1000;
+
+        Planets = [Planets,Invader];
+        PlanetColors = ["#77AC30","#7E2F8E","#0072BD","#A2142F","#D95319",	"#EDB120",	"#4DBEEE", 	"#0000FF", 	"#000000", 	"#FFFF00", "#FF0000"];
+        buffer = input("The timestep is set to one day and the sim will run for several years past the space invadres' initial entrance\nPress any button to continue\n");
+        % Newton formulation
+        drawcount = 0;
+        clf(figure(5))
+        figure(5)
+        hold on
+        for k = 1:10
+            plot3(Planets(1,k),Planets(2,k),Planets(3,k), 'o', 'MarkerSize', 1.3,'Color',PlanetColors(k));
+        end
+        drawnow;
+        % start the sequency, go for 5 years
+        for t = 0:86400:86400*365*10
+            for i = 1:11
+                forces = [0,0,0];
+                for j = 1:11
+                    if i ~= j
+                        force = G*Planets(9,i)*Planets(9,j)/((Planets(1,i)*1000-Planets(1,j)*1000)^2 + (Planets(2,i)*1000-Planets(2,j)*1000)^2 + (Planets(3,i)*1000-Planets(3,j)*1000)^2);
+                        forces(1,1) = forces(1,1) + force*(Planets(1,j)*1000-Planets(1,i)*1000)/sqrt((Planets(1,i)*1000-Planets(1,j)*1000)^2 + (Planets(2,i)*1000-Planets(2,j)*1000)^2 + (Planets(3,i)*1000-Planets(3,j)*1000)^2);
+                        forces(1,2) = forces(1,2) + force*(Planets(2,j)*1000-Planets(2,i)*1000)/sqrt((Planets(1,i)*1000-Planets(1,j)*1000)^2 + (Planets(2,i)*1000-Planets(2,j)*1000)^2 + (Planets(3,i)*1000-Planets(3,j)*1000)^2);
+                        forces(1,3) = forces(1,3) + force*(Planets(3,j)*1000-Planets(3,i)*1000)/sqrt((Planets(1,i)*1000-Planets(1,j)*1000)^2 + (Planets(2,i)*1000-Planets(2,j)*1000)^2 + (Planets(3,i)*1000-Planets(3,j)*1000)^2);
+                    end
+                end
+                % with the force components for x,y, and z on this particular planet, it's time to find the new positions and velocities
+                Planets(6,i) = Planets(6,i)+86400*forces(1,1)/Planets(9,i)/1000;
+                Planets(7,i) = Planets(7,i)+86400*forces(1,2)/Planets(9,i)/1000;
+                Planets(8,i) = Planets(8,i)+86400*forces(1,3)/Planets(9,i)/1000;
+                Planets(1,i) = Planets(1,i)+86400*Planets(6,i);
+                Planets(2,i) = Planets(2,i)+86400*Planets(7,i);
+                Planets(3,i) = Planets(3,i)+86400*Planets(8,i);
+            end
+            if(mod(drawcount,10) == 0)
+                for k = 1:11
+                    plot3(Planets(1,k),Planets(2,k),Planets(3,k), 'o', 'MarkerSize', 2,'Color',PlanetColors(k));
+                end
+                xlim([-1e9,1e9]);
+                ylim([-1e9,1e9]);
+                drawnow;
+            end
+            drawcount = drawcount + 1;
+        end
+        drawnow;
+    end
+    fprintf('\n\n');
+
+end
+
+
+
